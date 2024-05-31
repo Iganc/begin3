@@ -3,9 +3,10 @@ from Organisms.Plant import Plant
 from Action import Action
 from ActionEnum import ActionEnum
 from Organisms.Lynx import Lynx
-from Organisms.Antelope import Antelope
+from Organisms.Antelope2 import Antelope
 from Organisms.Sheep import Sheep
 from Organisms.Grass import Grass
+import logging
 
 class World(object):
 
@@ -16,7 +17,8 @@ class World(object):
 		self.__organisms = []
 		self.__newOrganisms = []
 		self.__separator = '.'
-		self.plague_rounds = 0
+		self.__isPlagueActive = False
+		self.__plagueTurns = 0
 
 	@property
 	def worldX(self):
@@ -54,6 +56,10 @@ class World(object):
 	def separator(self):
 		return self.__separator
 
+	@property
+	def isPlagueActive(self):
+		return self.__isPlagueActive
+
 	def addOrganismInteractive(self):
 		try:
 			choice = int(input("Czy chcesz dodać nowy organizm? 0-Nie, 1-Tak "))
@@ -85,15 +91,9 @@ class World(object):
 
 	def makeTurn(self):
 		actions = []
-
 		# Apply plague effects if plague_rounds is greater than 0
-		if self.plague_rounds > 0:
-			for organism in self.organisms:
-				if organism is not None:
-					organism.liveLength = organism.liveLength // 2
-					print(
-						"Dlugosc zycka {0} of organism {1}:::".format(organism.liveLength, organism.__class__.__name__))
-			self.plague_rounds -= 1  # Decrement plague_rounds
+		if self.__isPlagueActive:
+			self.handlePlague()
 
 		for org in self.organisms:
 			if self.positionOnBoard(org.position):
@@ -111,6 +111,8 @@ class World(object):
 		for o in self.organisms:
 			o.liveLength -= 1
 			o.power += 1
+			if not self.__isPlagueActive or self.__plagueTurns != 1:
+				o.liveLength -= 1
 			if o.liveLength < 1:
 				print(str(o.__class__.__name__) + ': died of old age at: ' + str(o.position))
 		self.organisms = [o for o in self.organisms if o.liveLength > 0]
@@ -188,6 +190,17 @@ class World(object):
 				result.append(filed)
 		return result
 
+	def find_nearby(self, position, sign):
+		logging.debug("Finding nearby %s from position %s", sign, position)
+		for y in range(self.worldY):
+			for x in range(self.worldX):
+				org = self.getOrganismFromPosition(Position(xPosition=x, yPosition=y))
+				if org and org.sign == sign:
+					logging.debug("Found %s at %s", sign, Position(xPosition=x, yPosition=y))
+					return Position(xPosition=x, yPosition=y)
+		logging.debug("No nearby %s found", sign)
+		return None
+
 	def __str__(self):
 		result = '\nturn: ' + str(self.__turn) + '\n'
 		for wY in range(0, self.worldY):
@@ -200,27 +213,22 @@ class World(object):
 			result += '\n'
 		return result
 
-	def plaga(self):
-		if self.plague_rounds > 0:
-			print("Plaga jest aktywna.")
-			return
+	def activatePlague(self):
+		if not self.__isPlagueActive:
+			logging.info("Plague will start in the next turn.")
+			self.__plagueTurns = 2  # Plague will last for 2 turns
+			self.__isPlagueActive = True
 
-		Tryb = str(input("Jeżeli chcesz włączyć tryb plagi wpisz: P "))
-		if Tryb == "P" or Tryb == 'p':
-			print("AAAAAAA")
-			self.plague_rounds = 2
-			for organism in self.organisms:
-				if organism is not None:
-					organism.liveLength = organism.liveLength // 2  # Use integer division for halving
-					print(
-						"Dlugosc zycka {0} of organism {1}:::".format(organism.liveLength, organism.__class__.__name__))
-		else:
-			return
+	def handlePlague(self):
+		logging.info("Plague active, %d turns remaining", self.__plagueTurns)
+		if self.__plagueTurns == 2:
+			print("Plague has started.")
+			for org in self.__organisms:
+				logging.debug("Halving life length for %s at position %s", org.__class__.__name__, org.position)
+				org.liveLength = max(1, org.liveLength // 2)
 
-	def aktywujPlage(self):
-		self.plague_rounds = 2
-		for organism in self.organisms:
-			if organism is not None:
-				organism.liveLength = organism.liveLength // 2  # Use integer division for halving
-				print(
-					"Dlugosc zycka {0} of organism {1}:::".format(organism.liveLength, organism.__class__.__name__))
+		self.__plagueTurns -= 1
+		if self.__plagueTurns == 0:
+			self.__isPlagueActive = False
+			logging.info("Plague has ended.")
+			print("Plague has ended.")

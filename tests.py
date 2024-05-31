@@ -9,9 +9,10 @@ import random
 from World import World
 from Position import Position
 from Organisms.Lynx import Lynx
-from Organisms.Antelope import Antelope
+from Organisms.Antelope2 import Antelope
 from Organisms.Grass import Grass
 from Organisms.Sheep import Sheep
+
 
 class TestWorld(unittest.TestCase):
 
@@ -63,16 +64,16 @@ class TestWorld(unittest.TestCase):
         )
 
     def test_plague_duration(self):
-        self.world.aktywujPlage()
+        self.world.activatePlague()
 
         self.world.makeTurn()
-        self.assertTrue(self.world.plague_rounds)
+        self.assertEqual(self.world.get_plague_turns(), 1)
 
         self.world.makeTurn()
-        self.assertTrue(self.world.plague_rounds)
+        self.assertEqual(self.world.get_plague_turns(), 0)
 
         self.world.makeTurn()
-        self.assertFalse(self.world.plague_rounds)
+        self.assertEqual(self.world.get_plague_turns(), 0)
 
     def test_plague(self):
         lynx = Lynx(position=Position(xPosition=0, yPosition=0), world=self.world)
@@ -90,36 +91,49 @@ class TestWorld(unittest.TestCase):
         initial_live_length_sheep = sheep.liveLength
         initial_live_length_grass = grass.liveLength
 
-        self.world.aktywujPlage()
+        # Activate plague
+        self.world.activatePlague()
         self.world.makeTurn()
+
+        # Expected lifespan after plague activation (halved)
         expected_live_length_lynx = max(1, initial_live_length_lynx // 2)
         expected_live_length_antelope = max(1, initial_live_length_antelope // 2)
         expected_live_length_sheep = max(1, initial_live_length_sheep // 2)
         expected_live_length_grass = max(1, initial_live_length_grass // 2)
 
-        self.assertEqual(lynx.liveLength, expected_live_length_lynx)  # This should be 9
+        # Debug statements to verify the values
+        print(f"Expected lynx lifespan after plague: {expected_live_length_lynx}")
+        print(f"Actual lynx lifespan after plague: {lynx.liveLength}")
+
+        self.assertEqual(lynx.liveLength, expected_live_length_lynx)  # Should be 9 (18 // 2)
         self.assertEqual(antelope.liveLength, expected_live_length_antelope)
         self.assertEqual(sheep.liveLength, expected_live_length_sheep)
         self.assertEqual(grass.liveLength, expected_live_length_grass)
 
+        # Simulate another turn
         self.world.makeTurn()
 
-        expected_live_length_lynx -= 1
-        expected_live_length_antelope -= 1
-        expected_live_length_sheep -= 1
-        expected_live_length_grass -= 1
+        # Lifespan should decrement by 1
+        # Expected lifespan after plague activation (halved) and after making a move (decremented by 1)
+        expected_live_length_lynx = max(1, initial_live_length_lynx // 2) - 1
+        expected_live_length_antelope = max(1, initial_live_length_antelope // 2) - 1
+        expected_live_length_sheep = max(1, initial_live_length_sheep // 2) - 1
+        expected_live_length_grass = max(1, initial_live_length_grass // 2) - 1
+
+        # Debug statements to verify the values
+        print(f"Expected lynx lifespan after next turn: {expected_live_length_lynx}")
+        print(f"Actual lynx lifespan after next turn: {lynx.liveLength}")
 
         self.assertEqual(lynx.liveLength, expected_live_length_lynx)
         self.assertEqual(antelope.liveLength, expected_live_length_antelope)
         self.assertEqual(sheep.liveLength, expected_live_length_sheep)
         self.assertEqual(grass.liveLength, expected_live_length_grass)
-        self.assertFalse(self.world.plague_rounds)
-
+        self.assertFalse(self.world.get_plague_turns())
 
     def test_plague_does_not_affect_new_generations(self):
         lynx = Lynx(position=Position(xPosition=0, yPosition=0), world=self.world)
         self.world.addOrganism(lynx)
-        self.world.aktywujPlage()
+        self.world.activatePlague()
         self.world.makeTurn()
         self.world.makeTurn()
 
@@ -133,8 +147,14 @@ class TestWorld(unittest.TestCase):
 
         initial_live_length_sheep = sheep.liveLength
 
+        # Ensure that the sheep can make a move
+        self.assertTrue(sheep.canMove())
+
         self.world.makeTurn()
         self.assertEqual(sheep.liveLength, initial_live_length_sheep - 1)
+
+        # Ensure that the sheep can make another move
+        self.assertTrue(sheep.canMove())
 
         self.world.makeTurn()
         self.assertEqual(sheep.liveLength, initial_live_length_sheep - 2)

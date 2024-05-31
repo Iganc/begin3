@@ -1,4 +1,4 @@
-from .Organism import Organism
+from Organisms.Organism import Organism
 from Action import Action
 from ActionEnum import ActionEnum
 import random
@@ -22,12 +22,12 @@ class Animal(Organism):
 		result = []
 		pomPositions = self.getNeighboringPosition()
 		newPosition = None
-
 		if pomPositions:
 			newPosition = random.choice(pomPositions)
 			result.append(Action(ActionEnum.A_MOVE, newPosition, 0, self))
 			self.lastPosition = self.position
 			metOrganism = self.world.getOrganismFromPosition(newPosition)
+			print(metOrganism)
 			if metOrganism is not None:
 				result.extend(metOrganism.consequences(self))
 		return result

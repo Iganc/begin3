@@ -1,20 +1,22 @@
-from .Animal import Animal
-
+from Organisms.Animal import Animal
 
 class Sheep(Animal):
 
-	def __init__(self, sheep=None, position=None, world=None):
-		super(Sheep, self).__init__(sheep, position, world)
+    def __init__(self, sheep=None, position=None, world=None):
+        super(Sheep, self).__init__(sheep, position, world)
 
-	def clone(self):
-		return Sheep(self, None, None)
+    def clone(self):
+        return Sheep(self, None, None)
 
-	def initParams(self):
-		self.power = 3
-		self.initiative = 3
-		self.liveLength = 10
-		self.powerToReproduce = 6
-		self.sign = 'S'
+    def initParams(self):
+        self.power = 3
+        self.initiative = 3
+        self.liveLength = 10
+        self.powerToReproduce = 6
+        self.sign = 'S'
 
-	def getNeighboringPosition(self):
-		return self.world.filterPositionsWithoutAnimals(self.world.getNeighboringPositions(self.position))
+    def getNeighboringPosition(self):
+        return self.world.filterPositionsWithoutAnimals(self.world.getNeighboringPositions(self.position))
+
+    def canMove(self):
+        return 0 < len(self.getNeighboringPosition())

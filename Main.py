@@ -3,7 +3,7 @@ from Position import Position
 from Organisms.Grass import Grass
 from Organisms.Sheep import Sheep
 from Organisms.Lynx import Lynx
-from Organisms.Antelope import Antelope
+from Organisms.Antelope2 import Antelope
 import os
 
 
@@ -31,11 +31,15 @@ if __name__ == '__main__':
 
 	print(pyWorld)
 
+
 	for _ in range(0, 50):
 		input('')
 		os.system('cls')
 		pyWorld.makeTurn()
-		print([0,1,2,3,4,5,6,7,8,9])
 		print(pyWorld)
 		pyWorld.addOrganismInteractive()
-		pyWorld.plaga()
+		user_input = input(
+			'Press Enter to continue, type "p" to activate plague')
+		if user_input == 'p':
+			pyWorld.activatePlague()
+
