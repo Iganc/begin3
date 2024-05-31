@@ -5,7 +5,7 @@ from ActionEnum import ActionEnum
 from Organisms.Lynx import Lynx
 from Organisms.Antelope import Antelope
 from Organisms.Sheep import Sheep
-import math
+from Organisms.Grass import Grass
 
 class World(object):
 
@@ -16,6 +16,7 @@ class World(object):
 		self.__organisms = []
 		self.__newOrganisms = []
 		self.__separator = '.'
+		self.plague_rounds = 0
 
 	@property
 	def worldX(self):
@@ -54,13 +55,21 @@ class World(object):
 		return self.__separator
 
 	def addOrganismInteractive(self):
-		choice = int(input("Czy chcesz dodać nowy organizm? 0-Nie, 1-Tak "))
+		try:
+			choice = int(input("Czy chcesz dodać nowy organizm? 0-Nie, 1-Tak "))
+		except ValueError:
+			return
+
 		if choice == 0:
 			return
 		if choice == 1:
-			choice2 = int(input("1-owca\n2-trawa\n3-Rys\n4-Antylopa\n"))
-			coordinates = input("Podaj koordynaty: ")
-			x, y = map(int, coordinates.split(','))  # assuming the coordinates are entered in the format x,y
+			try:
+				choice2 = int(input("1-owca\n2-trawa\n3-Rys\n4-Antylopa\n"))
+				coordinates = input("Podaj koordynaty: ")
+				x, y = map(int, coordinates.split(','))  # assuming the coordinates are entered in the format x,y
+			except ValueError:
+				return
+
 			position = Position(xPosition=x, yPosition=y)
 			if choice2 == 1:
 				newOrg = Sheep(position=position, world=self)
@@ -76,6 +85,15 @@ class World(object):
 
 	def makeTurn(self):
 		actions = []
+
+		# Apply plague effects if plague_rounds is greater than 0
+		if self.plague_rounds > 0:
+			for organism in self.organisms:
+				if organism is not None:
+					organism.liveLength = organism.liveLength // 2
+					print(
+						"Dlugosc zycka {0} of organism {1}:::".format(organism.liveLength, organism.__class__.__name__))
+			self.plague_rounds -= 1  # Decrement plague_rounds
 
 		for org in self.organisms:
 			if self.positionOnBoard(org.position):
@@ -183,13 +201,26 @@ class World(object):
 		return result
 
 	def plaga(self):
+		if self.plague_rounds > 0:
+			print("Plaga jest aktywna.")
+			return
+
 		Tryb = str(input("Jeżeli chcesz włączyć tryb plagi wpisz: P "))
 		if Tryb == "P" or Tryb == 'p':
 			print("AAAAAAA")
+			self.plague_rounds = 2
 			for organism in self.organisms:
 				if organism is not None:
-					organism.liveLength = math.ceil(organism.liveLength / 2)
-					print("Dlugosc zycka {0} of organism {1}:::".format(organism.liveLength, organism.__class__.__name__))
+					organism.liveLength = organism.liveLength // 2  # Use integer division for halving
+					print(
+						"Dlugosc zycka {0} of organism {1}:::".format(organism.liveLength, organism.__class__.__name__))
 		else:
 			return
 
+	def aktywujPlage(self):
+		self.plague_rounds = 2
+		for organism in self.organisms:
+			if organism is not None:
+				organism.liveLength = organism.liveLength // 2  # Use integer division for halving
+				print(
+					"Dlugosc zycka {0} of organism {1}:::".format(organism.liveLength, organism.__class__.__name__))
